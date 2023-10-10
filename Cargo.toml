@@ -1,30 +1,28 @@
 [package]
 name = "beryl"
 version = "0.1.0"
+edition = "2021"
 authors = ["Evan Cox <evanacox00@gmail.com>"]
 description = "A toy operating system"
-license = "BSD-3"
-edition = "2021"
-
 
 [workspace]
+resolver = "2"
 members = [
-    "kernel",
-    "sdk/stdc"
+    "sdk/stdc",
+    "src/apps/hello-world",
+    "src/drivers/kframebuffer",
+    "src/kernel",
+    "tools/beryl-bootimage-x86_64",
+    "tools/beryl-bootimage-aarch64",
 ]
 
-[build-dependencies]
-kernel = { path = "kernel", artifact = "bin", target = "x86_64-unknown-none" }
-bootloader = "0.11.4"
+[dependencies]
+ovmf-prebuilt = "0.1.0-alpha.1"
 
-# we need to have some targets here to enable the
-# cargo bindep functionality to work.
-#
-# TODO: make these exclusively be test targets
+[[bin]]
+name = "beryl-qemu-x86_64-bios"
+path = "tools/beryl-qemu-x86_64-bios/main.rs"
+
 [[bin]]
 name = "beryl-qemu-x86_64-uefi"
 path = "tools/beryl-qemu-x86_64-uefi/main.rs"
-
-[[bin]]
-name = "beryl-post-build"
-path = "tools/beryl-post-build/main.rs"

@@ -1,0 +1,8 @@
+[package]
+name = "beryl-bootimage-x86_64"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+kernel = { path = "../../src/kernel", artifact = "bin", target = "x86_64-unknown-none" }
+bootloader = "0.11.4"

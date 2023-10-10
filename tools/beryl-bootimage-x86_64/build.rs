@@ -8,13 +8,19 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-use std::{env, fs};
+use bootloader::DiskImageBuilder;
+use std::{env, path::PathBuf};
 
 fn main() {
-    let current_exe = env::current_exe().unwrap();
-    let uefi_target = current_exe.with_file_name("beryl-uefi.img");
-    let bios_target = current_exe.with_file_name("beryl-bios.img");
+    let kernel_path = env::var("CARGO_BIN_FILE_KERNEL").unwrap();
+    let disk_builder = DiskImageBuilder::new(PathBuf::from(kernel_path.clone()));
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let uefi_path = out_dir.join("beryl-x86_64-uefi.img");
+    let bios_path = out_dir.join("beryl-x86_64-bios.img");
 
-    fs::copy(env!("UEFI_IMAGE"), &uefi_target).unwrap();
-    fs::copy(env!("BIOS_IMAGE"), &bios_target).unwrap();
+    disk_builder.create_uefi_image(&uefi_path).unwrap();
+    disk_builder.create_bios_image(&bios_path).unwrap();
+
+    println!("cargo:rustc-env=UEFI_IMAGE={}", uefi_path.display());
+    println!("cargo:rustc-env=BIOS_IMAGE={}", bios_path.display());
 }

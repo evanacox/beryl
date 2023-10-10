@@ -1,6 +1,6 @@
 //======---------------------------------------------------------------======//
 //                                                                           //
-// Copyright 2023 Evan Cox <evanacox00@gmail.com>. All rights reserved.      //
+// Copyright 2022-2023 Evan Cox <evanacox00@gmail.com>. All rights reserved. //
 //                                                                           //
 // Use of this source code is governed by a BSD-style license that can be    //
 // found in the LICENSE.txt file at the root of this project, or at the      //
@@ -8,16 +8,19 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-use std::{
-    env,
-    process::{self, Command},
-};
+use std::{env, fs};
 
 fn main() {
-    let mut qemu = Command::new("qemu-system-x86_64");
-    qemu.arg("-drive");
-    qemu.arg(format!("format=raw,file={}", env!("UEFI_IMAGE")));
-    qemu.arg("-bios").arg(ovmf_prebuilt::ovmf_pure_efi());
-    let exit_status = qemu.status().unwrap();
-    process::exit(exit_status.code().unwrap_or(-1));
+    let output = env::current_dir().unwrap().join("target/images/");
+
+    fs::create_dir_all(&output).expect("unable to create directory ./target/images/");
+
+    let uefi_target = output.join("beryl-x86_64-uefi.img");
+    let bios_target = output.join("beryl-x86_64-bios.img");
+
+    fs::copy(env!("UEFI_IMAGE"), &uefi_target).unwrap();
+    fs::copy(env!("BIOS_IMAGE"), &bios_target).unwrap();
+
+    println!("beryl: uefi image copied to {}", uefi_target.display());
+    println!("beryl: bios image copied to {}", bios_target.display());
 }
