@@ -8,7 +8,14 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-#[cfg(target_arch = "x86_64")]
-mod x86_64;
+use core::arch::asm;
 
-pub struct BootInfo {}
+/// This is used to halt a thread in kernel mode.
+///
+/// It relies on the privileged aarch64 instructions
+/// `wfi`, and just runs them in an infinite loop.
+pub unsafe fn privileged_halt_thread() -> ! {
+    loop {
+        asm!("wfi");
+    }
+}

@@ -14,7 +14,6 @@ use core::arch::asm;
 ///
 /// It relies on the privileged x86-64 instructions
 /// `cli` and `hlt`, and just runs them in an infinite loop.
-#[cfg(target_arch = "x86_64")]
 pub unsafe fn privileged_halt_thread() -> ! {
     loop {
         asm!("cli");

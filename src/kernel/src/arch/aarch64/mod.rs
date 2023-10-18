@@ -8,17 +8,8 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-//! Models any architecture/target-specific functionality that we
-//! want to abstract away in the kernel.
+//! aarch64-specific kernel code.
 //!
-//! To support new targets, ideally the only thing that needs to be
-//! produced is a new HAL.
+//! This does not provide boot support yet.
 
-mod spin;
-
-pub use spin::*;
-
-pub mod interrupts;
-
-#[cfg(target_arch = "x86_64")]
-mod x86_64;
+pub mod hal;

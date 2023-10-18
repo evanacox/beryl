@@ -8,9 +8,13 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-//! The hardware abstraction layer for x86-64.
+//! An x86-64 implementation of the Beryl HAL (hardware abstraction layer).
 //!
-//! This exposes x86-64 specific implementations of all of the HAL
-//! interfaces.
+//! This provides the x86_64-specific implementation of various system
+//! functions that the kernel needs to be able to perform.
 
-pub mod interrupts;
+mod serial;
+mod spin;
+
+pub use serial::*;
+pub use spin::*;

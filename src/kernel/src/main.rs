@@ -21,47 +21,55 @@
 #![allow(clippy::mod_module_files, clippy::pub_use)]
 #![feature(abi_x86_interrupt)]
 
-mod boot;
+mod arch;
 mod drivers;
-mod hal;
 mod utility;
 
-use crate::boot::BootInfo;
+use crate::arch::{hal, SystemInfo};
 use crate::drivers::kframebuffer;
 use core::panic::PanicInfo;
-use core::{ptr, slice};
+use core::ptr;
 use ksupport::sync::BasicMutex;
 use log::{error, trace};
 
 /// The true platform-independent entry point for the kernel.
 ///
-/// Boot code (in the `boot/` subdirectory) sets up the kernel drivers and any necessary state,
+/// Boot code (in the `arch/<sys>/` subdirectory) sets up the kernel drivers and any necessary state,
 /// then they call this function with information they collect in their platform-dependent
 /// way.
 ///
 /// At this point, the stack is expected to be set up, drivers initialized, anything else
 /// that is "reasonable" to use is ready (except floating-point).
-pub fn kernel_main(_: BootInfo) -> ! {
-    trace!("entered kernel::kernel_main");
+pub fn kernel_main(info: SystemInfo) -> ! {
+    trace!("entered `::kernel_main`! system memory: {}", info.memory);
 
     let mut buf = kframebuffer::framebuffer();
+    let mut local = [0u8; 4096000];
 
-    {
-        let mut raw = buf.lock();
+    loop {
+        for (b, g, r, a) in [(255, 81, 70, 255), (0, 15, 150, 255)] {
+            for at in 0..4096000usize {
+                let byte = match at & 3 {
+                    0 => b,
+                    1 => g,
+                    2 => r,
+                    _ => a,
+                };
 
-        for at in 0..4096000usize {
-            let byte = match at & 3 {
-                0 => 255,
-                1 => 81,
-                2 => 70,
-                _ => 255,
-            };
+                unsafe {
+                    *local.get_unchecked_mut(at) = byte;
+                }
+            }
 
-            raw.raw_set(at, byte);
+            {
+                let mut raw = buf.lock();
+
+                unsafe {
+                    ptr::copy_nonoverlapping(local.as_ptr(), raw.raw_buffer(), 4096000);
+                }
+            }
         }
     }
-
-    loop {}
 }
 
 #[panic_handler]

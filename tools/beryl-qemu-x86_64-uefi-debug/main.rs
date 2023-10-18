@@ -21,6 +21,8 @@ fn main() {
         .arg(ovmf_prebuilt::ovmf_pure_efi())
         .arg("-serial")
         .arg("stdio")
+        .arg("-m")
+        .arg("1G")
         .status()
         .unwrap();
 }

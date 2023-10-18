@@ -8,18 +8,10 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-#[cfg(target_arch = "x86_64")]
-use super::x86_64::interrupts;
+//! x86_64-specific kernel code.
+//!
+//! This uses the [`bootloader`](bootloader) crate for initial boot.
 
-#[cfg(target_arch = "x86_64")]
-pub type HALInterruptHandler = interrupts::InterruptHandler;
+mod start;
 
-/// A handler for a single interrupt.
-///
-/// These are what goes into the interrupt handler table
-/// for a given architecture, it models the interrupts
-/// that the OS actually cares about.
-#[derive(Copy, Clone)]
-pub struct HALInterruptTable {
-    div_by_zero: Option<HALInterruptHandler>,
-}
+pub mod hal;

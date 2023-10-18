@@ -8,22 +8,25 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-//! The boot code for x86-64 targets.
-//!  
-//! This sets up the HAL and kernel drivers, then jumps to
-//! [`kernel_main`](crate::kernel_main).
-
-use crate::boot::BootInfo;
+use crate::arch::x86_64::hal::SerialPort;
+use crate::arch::SystemInfo;
 use crate::drivers::kframebuffer::LinearFramebuffer;
-use crate::drivers::kserial::SerialPortX86_64;
 use crate::drivers::{kframebuffer, klog, kserial};
-use bootloader_api::{entry_point, BootInfo as X86_64BootInfo};
+use bootloader_api::{entry_point, BootInfo, BootloaderConfig};
 use log::{trace, LevelFilter};
 
-entry_point!(kernel_start);
+static CONFIG: BootloaderConfig = {
+    let mut config = BootloaderConfig::new_default();
 
-fn kernel_start(info: &'static mut X86_64BootInfo) -> ! {
-    kserial::serial_init(|| unsafe { SerialPortX86_64::default_com1() });
+    config.kernel_stack_size = 8 * 1024 * 1024; // 8 MiB
+
+    config
+};
+
+entry_point!(kernel_start, config = &CONFIG);
+
+fn kernel_start(info: &'static mut BootInfo) -> ! {
+    kserial::serial_init(|| unsafe { SerialPort::default_com1() });
     klog::logger_init(LevelFilter::Trace);
 
     trace!("initialized serial");
@@ -34,5 +37,11 @@ fn kernel_start(info: &'static mut X86_64BootInfo) -> ! {
 
     trace!("initialized framebuffer");
 
-    crate::kernel_main(BootInfo {})
+    let mut memory = 0usize;
+
+    for region in info.memory_regions.iter() {
+        memory += (region.end - region.start) as usize;
+    }
+
+    crate::kernel_main(SystemInfo { memory })
 }

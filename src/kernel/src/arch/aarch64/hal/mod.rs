@@ -8,8 +8,10 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-/// A single interrupt handler function for x86-64.
-///
-/// This will be called by the interrupt trampoline,
-/// all registers are preserved before this is called.
-pub type InterruptHandler = extern "C" fn();
+//! aarch64 implementations of Beryl's HAL.
+
+mod serial;
+mod spin;
+
+pub use serial::*;
+pub use spin::*;

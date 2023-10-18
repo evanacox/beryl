@@ -8,17 +8,31 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+use crate::drivers::kserial::SerialBackend;
+use core::fmt;
+use core::fmt::Write;
+
+/// An aarch64-specific MMIO serial port.
+pub struct SerialPort {
+    uart: u64,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+impl SerialBackend for SerialPort {
+    fn init(&mut self) {
+        todo!()
+    }
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    fn send(&mut self, byte: u8) {
+        todo!()
+    }
+
+    fn recv(&mut self) -> u8 {
+        todo!()
+    }
+}
+
+impl Write for SerialPort {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        panic!()
     }
 }
