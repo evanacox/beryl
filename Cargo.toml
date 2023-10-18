@@ -10,8 +10,8 @@ resolver = "2"
 members = [
     "sdk/stdc",
     "src/apps/hello-world",
-    "src/drivers/kframebuffer",
     "src/kernel",
+    "src/libs/ksupport",
     "tools/beryl-bootimage-x86_64",
     "tools/beryl-bootimage-aarch64",
 ]
@@ -26,3 +26,7 @@ path = "tools/beryl-qemu-x86_64-bios/main.rs"
 [[bin]]
 name = "beryl-qemu-x86_64-uefi"
 path = "tools/beryl-qemu-x86_64-uefi/main.rs"
+
+[[bin]]
+name = "beryl-qemu-x86_64-uefi-debug"
+path = "tools/beryl-qemu-x86_64-uefi-debug/main.rs"

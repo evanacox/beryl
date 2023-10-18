@@ -8,15 +8,16 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-use std::{
-    env, fs,
-    process::{self, Command},
-};
+use std::process::{self, Command};
 
 fn main() {
-    let mut qemu = Command::new("qemu-system-x86_64");
-    qemu.arg("-drive");
-    qemu.arg(format!("format=raw,file={}", env!("BIOS_IMAGE")));
-    let exit_status = qemu.status().unwrap();
-    process::exit(exit_status.code().unwrap_or(-1));
+    let mut status = Command::new("qemu-system-x86_64")
+        .arg("-drive")
+        .arg("format=raw,file=./target/images/beryl-x86_64-bios.img")
+        .arg("-serial")
+        .arg("stdio")
+        .status()
+        .unwrap();
+
+    process::exit(status.code().unwrap_or(-1));
 }

@@ -1,0 +1,1 @@
+add-symbol-file ./target/images/beryl-x86_64.elf -o 0x8000000000

@@ -12,7 +12,9 @@ use std::io::Stdout;
 use std::process::{self, Command, Stdio};
 
 fn main() {
-    let mut status = Command::new("qemu-system-x86_64")
+    Command::new("qemu-system-x86_64")
+        .arg("-s")
+        .arg("-S")
         .arg("-drive")
         .arg("format=raw,file=./target/images/beryl-x86_64-uefi.img")
         .arg("-bios")
@@ -21,6 +23,4 @@ fn main() {
         .arg("stdio")
         .status()
         .unwrap();
-
-    process::exit(status.code().unwrap_or(-1));
 }

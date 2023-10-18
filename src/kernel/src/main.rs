@@ -17,63 +17,57 @@
 #![no_main]
 #![deny(missing_docs)]
 #![deny(missing_abi)]
+#![deny(clippy::all, clippy::pedantic, clippy::nursery)]
+#![allow(clippy::mod_module_files, clippy::pub_use)]
+#![feature(abi_x86_interrupt)]
 
+mod boot;
+mod drivers;
 mod hal;
+mod utility;
 
-use bootloader_api::{entry_point, BootInfo};
+use crate::boot::BootInfo;
+use crate::drivers::kframebuffer;
 use core::panic::PanicInfo;
+use core::{ptr, slice};
+use ksupport::sync::BasicMutex;
+use log::{error, trace};
 
-entry_point!(kernel_main);
+/// The true platform-independent entry point for the kernel.
+///
+/// Boot code (in the `boot/` subdirectory) sets up the kernel drivers and any necessary state,
+/// then they call this function with information they collect in their platform-dependent
+/// way.
+///
+/// At this point, the stack is expected to be set up, drivers initialized, anything else
+/// that is "reasonable" to use is ready (except floating-point).
+pub fn kernel_main(_: BootInfo) -> ! {
+    trace!("entered kernel::kernel_main");
 
-struct Xorshiro256SSState {
-    state: [u64; 4],
-}
+    let mut buf = kframebuffer::framebuffer();
 
-impl Xorshiro256SSState {
-    fn next(&mut self) -> u64 {
-        let result = self.state[1].rotate_left(7) * 9;
-        let t = self.state[1] << 17;
+    {
+        let mut raw = buf.lock();
 
-        self.state[2] ^= self.state[0];
-        self.state[3] ^= self.state[1];
-        self.state[1] ^= self.state[2];
-        self.state[0] ^= self.state[3];
+        for at in 0..4096000usize {
+            let byte = match at & 3 {
+                0 => 255,
+                1 => 81,
+                2 => 70,
+                _ => 255,
+            };
 
-        self.state[2] ^= t;
-        self.state[3] = self.state[3].rotate_left(45);
-
-        result
-    }
-}
-
-fn kernel_main(info: &'static mut BootInfo) -> ! {
-    if let Some(framebuffer) = info.framebuffer.as_mut() {
-        let mut state = Xorshiro256SSState {
-            state: [
-                0x243F6A8885A308D3,
-                0x13198A2E03707344,
-                0xA4093822299F31D0,
-                0x082EFA98EC4E6C89,
-            ],
-        };
-
-        for bytes in framebuffer.buffer_mut().chunks_mut(8) {
-            let next = state.next();
-            let next_bytes = next.to_le_bytes();
-
-            for i in 0..8 {
-                bytes[i] = next_bytes[i];
-            }
+            raw.raw_set(at, byte);
         }
     }
 
-    unsafe {
-        hal::privileged_halt_thread();
-    }
+    loop {}
 }
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    error!("{info}");
+
     unsafe {
         hal::privileged_halt_thread();
     }

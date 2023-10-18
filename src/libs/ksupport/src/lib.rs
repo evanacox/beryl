@@ -8,29 +8,23 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-//! Kernel-level framebuffer driver.
+//! Kernel-level support library containing utilities needed
+//! throughout kernel-level code.
 //!
-//! This driver is purely for debug purposes, and is meant to be replaced
-//! by a user-mode graphics driver. For now, this is for CPU-level interaction
-//! with the framebuffer as exposed by the bootloader.
-//!
-//! This is intended to be linked directly into the kernel.
+//! This is the "catch-all" crate for that type of code.
 
 #![no_std]
+#![feature(core_intrinsics)]
 #![deny(missing_docs)]
 #![deny(missing_abi)]
+#![deny(clippy::all, clippy::pedantic, clippy::nursery)]
+#![allow(clippy::mod_module_files, clippy::pub_use)]
 
-/// Does a thing
-pub fn add(x: i32, y: i32) -> i32 {
-    x + y
-}
+mod spin_once;
+pub mod sync;
+mod xorshift128p;
+mod xoshiro256ss;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        assert_eq!(add(1, 1), 2);
-    }
-}
+pub use spin_once::SpinOnceCell;
+pub use xorshift128p::Xorshift128Plus;
+pub use xoshiro256ss::Xoshiro256;

@@ -15,12 +15,15 @@ fn main() {
 
     fs::create_dir_all(&output).expect("unable to create directory ./target/images/");
 
+    let elf_target = output.join("beryl-x86_64.elf");
     let uefi_target = output.join("beryl-x86_64-uefi.img");
     let bios_target = output.join("beryl-x86_64-bios.img");
 
+    fs::copy(env!("ELF_IMAGE"), &elf_target).unwrap();
     fs::copy(env!("UEFI_IMAGE"), &uefi_target).unwrap();
     fs::copy(env!("BIOS_IMAGE"), &bios_target).unwrap();
 
+    println!("beryl: elf binary copied to {}", elf_target.display());
     println!("beryl: uefi image copied to {}", uefi_target.display());
     println!("beryl: bios image copied to {}", bios_target.display());
 }
