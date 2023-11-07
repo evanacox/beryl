@@ -47,7 +47,7 @@ impl Xoshiro256 {
     /// This is relatively fast, and completely deterministic based
     /// on the seed and the previous number of calls to [`Self::next`].
     pub fn next(&mut self) -> u64 {
-        let result = Self::rotate_left(self.state[1], 7) * 9;
+        let result = Self::rotate_left(self.state[1], 7).wrapping_mul(9);
         let t = self.state[1] << 17;
 
         self.state[2] ^= self.state[0];

@@ -12,6 +12,8 @@ use crate::arch::x86_64::hal::SerialPort;
 use crate::arch::SystemInfo;
 use crate::drivers::kframebuffer::LinearFramebuffer;
 use crate::drivers::{kframebuffer, klog, kserial};
+use bootloader_api::config::{ApiVersion, Mapping};
+use bootloader_api::info::MemoryRegionKind;
 use bootloader_api::{entry_point, BootInfo, BootloaderConfig};
 use log::{trace, LevelFilter};
 
@@ -38,10 +40,34 @@ fn kernel_start(info: &'static mut BootInfo) -> ! {
     trace!("initialized framebuffer");
 
     let mut memory = 0usize;
+    let mut usable = 0usize;
 
     for region in info.memory_regions.iter() {
-        memory += (region.end - region.start) as usize;
+        let (start, end) = (region.start, region.end);
+
+        memory += (end - start) as usize;
+
+        match region.kind {
+            MemoryRegionKind::Usable => {
+                trace!("found usable page! [{start:0x}, {end:0x}]");
+
+                usable += (end - start) as usize;
+            }
+            MemoryRegionKind::Bootloader => trace!("found bootloader page! [{start:0x}, {end:0x}]"),
+            MemoryRegionKind::UnknownUefi(_) => {
+                trace!("found unknown uefi page! [{start:0x}, {end:0x}]")
+            }
+            MemoryRegionKind::UnknownBios(_) => {
+                trace!("found unknown bios page! [{start:0x}, {end:0x}]")
+            }
+            kind => panic!("unknown type of memory page '{kind:?}'"),
+        }
     }
+
+    trace!("kernel address = {:?}", kernel_start as *mut u8);
+    trace!("total memory = {memory} (in bytes)");
+    trace!("total usable memory = {usable} (in bytes)");
+    trace!("total unusable memory = {} (in bytes)", memory - usable);
 
     crate::kernel_main(SystemInfo { memory })
 }

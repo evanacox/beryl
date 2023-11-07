@@ -8,6 +8,28 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
+use bpaf::*;
+use std::process::{self, Command};
+
 fn main() {
-    todo!()
+    let file = positional::<String>("IMAGE").help("the uefi image to boot");
+    let mem = short('m')
+        .help("the amount of memory to give the vm")
+        .argument::<String>("MEMORY")
+        .fallback("1G".to_string());
+
+    let (file, mem) = construct!(file, mem).run();
+    let drive = format!("format=raw,file={file}");
+
+    let mut status = Command::new("qemu-system-x86_64")
+        .arg("-drive")
+        .arg(&drive)
+        .arg("-serial")
+        .arg("stdio")
+        .arg("-m")
+        .arg(&mem)
+        .status()
+        .unwrap();
+
+    process::exit(status.code().unwrap_or(-1));
 }

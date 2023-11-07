@@ -27,9 +27,11 @@ mod utility;
 
 use crate::arch::{hal, SystemInfo};
 use crate::drivers::kframebuffer;
+use core::mem::MaybeUninit;
 use core::panic::PanicInfo;
 use core::ptr;
 use ksupport::sync::BasicMutex;
+use ksupport::Xoshiro256;
 use log::{error, trace};
 
 /// The true platform-independent entry point for the kernel.
@@ -44,29 +46,24 @@ pub fn kernel_main(info: SystemInfo) -> ! {
     trace!("entered `::kernel_main`! system memory: {}", info.memory);
 
     let mut buf = kframebuffer::framebuffer();
+    let mut value = 0x01u8;
     let mut local = [0u8; 4096000];
 
+    trace!("zeroed double-buffer");
+
     loop {
-        for (b, g, r, a) in [(255, 81, 70, 255), (0, 15, 150, 255)] {
-            for at in 0..4096000usize {
-                let byte = match at & 3 {
-                    0 => b,
-                    1 => g,
-                    2 => r,
-                    _ => a,
-                };
+        for byte in local.iter_mut() {
+            *byte = value;
 
-                unsafe {
-                    *local.get_unchecked_mut(at) = byte;
-                }
-            }
+            value ^= value.wrapping_mul(71);
+        }
 
-            {
-                let mut raw = buf.lock();
+        {
+            let mut raw = buf.lock();
+            let size = raw.full_raw_buffer().len();
 
-                unsafe {
-                    ptr::copy_nonoverlapping(local.as_ptr(), raw.raw_buffer(), 4096000);
-                }
+            unsafe {
+                ptr::copy_nonoverlapping(local.as_ptr(), raw.raw_buffer(), size);
             }
         }
     }

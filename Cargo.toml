@@ -8,25 +8,37 @@ description = "A toy operating system"
 [workspace]
 resolver = "2"
 members = [
-    "sdk/stdc",
+    "sdk/libc",
     "src/apps/hello-world",
     "src/kernel",
     "src/libs/ksupport",
-    "tools/beryl-bootimage-x86_64",
-    "tools/beryl-bootimage-aarch64",
 ]
 
 [dependencies]
+bootloader = "0.11.4"
+bpaf = "0.9.5"
 ovmf-prebuilt = "0.1.0-alpha.1"
 
-[[bin]]
-name = "beryl-qemu-x86_64-bios"
-path = "tools/beryl-qemu-x86_64-bios/main.rs"
+[profile.release-with-debug]
+inherits = "release"
+debug = true
 
 [[bin]]
-name = "beryl-qemu-x86_64-uefi"
-path = "tools/beryl-qemu-x86_64-uefi/main.rs"
+name = "qemu-x86_64-bios"
+path = "tools/qemu-x86_64-bios/main.rs"
 
 [[bin]]
-name = "beryl-qemu-x86_64-uefi-debug"
-path = "tools/beryl-qemu-x86_64-uefi-debug/main.rs"
+name = "qemu-x86_64-uefi"
+path = "tools/qemu-x86_64-uefi/main.rs"
+
+[[bin]]
+name = "qemu-x86_64-uefi-debuggable"
+path = "tools/qemu-x86_64-uefi-debuggable/main.rs"
+
+[[bin]]
+name = "bootimage-x86_64"
+path = "tools/bootimage-x86_64/main.rs"
+
+[[bin]]
+name = "bootimage-aarch64"
+path = "tools/bootimage-aarch64/main.rs"

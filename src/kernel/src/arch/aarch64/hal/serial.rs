@@ -14,7 +14,7 @@ use core::fmt::Write;
 
 /// An aarch64-specific MMIO serial port.
 pub struct SerialPort {
-    uart: u64,
+    uart: *mut u8,
 }
 
 impl SerialBackend for SerialPort {

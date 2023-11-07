@@ -51,7 +51,7 @@ impl Xorshift128Plus {
 
         self.state[1] = t;
 
-        t + s
+        t.wrapping_add(s)
     }
 }
 

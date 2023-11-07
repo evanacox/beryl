@@ -3,27 +3,29 @@ BerylOS: A toy operating system
 
 ## Building
 
-`beryl-bootimage-<arch>` packages are provided that build and package the operating
-system for different targets. Choose your target, and figure out what your host 
-architecture is (since you need to specify it). Then, run the `bootimage` target.
+To build the operating system, you need to first build the `kernel` package
+for the target operating system you want, and then you need to use the 
+`bootimage-<arch>` target to turn the build output from `kernel` (an ELF file)
+into a flat binary (a `.img` file).
 
-> Note: you must be in the root directory of the project when running these,
-> or the executable will be put in the wrong directory.
- 
-Ex: building for x86-64 on x86-64 Linux host `x86_64-unknown-linux-gnu`:
+### Ex: Building for x86-64 in release mode
 
 ```sh
-beryl $ cargo run --package beryl-bootimage-x86_64 --target x86_64-unknown-linux-gnu
+$ cargo build --package kernel --target x86_64-unknown-none --release
+$ cargo run --bin bootimage-x86_64 -- \
+            --kernel ./target/x86_64-unknown-none/release/kernel \
+            --uefi ./target/images/beryl-x86_64-uefi.img \
+            --bios ./target/images/beryl-x86_64-bios.img
 ```
 
-Ex: building for x86-64 on `aarch64-apple-darwin`:
+## Running via QEMU
 
-```sh
-beryl $ cargo run --package beryl-bootimage-x86_64 --target x86_64-unknown-linux-gnu
+The project provides some pre-made scripts for launching QEMU. Assuming you've already
+built your images with the commands above, you can launch QEMU like this:
+
+```shell
+$ cargo run --bin qemu-x86_64-uefi -- ./target/images/beryl-x86_64-uefi.img -m 1G
 ```
-
-The location of the `.img` file will be printed by the executable after it is moved 
-into the final location.
 
 ## Project Structure
 

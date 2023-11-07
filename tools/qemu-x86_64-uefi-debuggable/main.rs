@@ -8,17 +8,31 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-use std::io::Stdout;
-use std::process::{self, Command, Stdio};
+use bpaf::*;
+use std::process;
+use std::process::Command;
 
 fn main() {
-    let mut status = Command::new("qemu-system-x86_64")
+    let file = positional::<String>("IMAGE").help("the uefi image to boot");
+    let mem = short('m')
+        .help("the amount of memory to give the vm")
+        .argument::<String>("MEMORY")
+        .fallback("1G".to_string());
+
+    let (file, mem) = construct!(file, mem).run();
+    let drive = format!("format=raw,file={file}");
+
+    let status = Command::new("qemu-system-x86_64")
+        .arg("-s")
+        .arg("-S")
         .arg("-drive")
-        .arg("format=raw,file=./target/images/beryl-x86_64-uefi.img")
+        .arg(&drive)
         .arg("-bios")
         .arg(ovmf_prebuilt::ovmf_pure_efi())
         .arg("-serial")
         .arg("stdio")
+        .arg("-m")
+        .arg(&mem)
         .status()
         .unwrap();
 

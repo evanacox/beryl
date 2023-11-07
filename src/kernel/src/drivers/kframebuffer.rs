@@ -148,6 +148,12 @@ impl LinearFramebuffer {
     pub fn raw_buffer(&mut self) -> *mut u8 {
         self.raw.as_mut_ptr()
     }
+
+    /// Returns a slice that contains the entire framebuffer
+    #[inline]
+    pub fn full_raw_buffer(&mut self) -> &mut [u8] {
+        self.raw
+    }
 }
 
 #[cfg(target_arch = "x86_64")]
