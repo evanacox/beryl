@@ -12,35 +12,78 @@ use crate::arch::x86_64::hal::SerialPort;
 use crate::arch::SystemInfo;
 use crate::drivers::kframebuffer::LinearFramebuffer;
 use crate::drivers::{kframebuffer, klog, kserial};
-use bootloader_api::config::{ApiVersion, Mapping};
-use bootloader_api::info::MemoryRegionKind;
-use bootloader_api::{entry_point, BootInfo, BootloaderConfig};
+use core::arch::asm;
+use limine::{BootInfoRequest, Framebuffer, FramebufferRequest, StackSizeRequest};
 use log::{trace, LevelFilter};
 
-static CONFIG: BootloaderConfig = {
-    let mut config = BootloaderConfig::new_default();
+const EIGHT_MB_STACK: u64 = 8 * 1024 * 1024;
 
-    config.kernel_stack_size = 8 * 1024 * 1024; // 8 MiB
+// set our base revision of the bootloader to revision 1
+static LIMINE_BASE_REVISION: [u64; 3] = [0xf9562b2d5c95a6c8, 0x6a7b384944536bdc, 1];
 
-    config
-};
+// get the framebuffer from Limine, revision 0 because of limine-rs limitations
+static FRAMEBUFFER_REQUEST: FramebufferRequest = FramebufferRequest::new(0);
 
-entry_point!(kernel_start, config = &CONFIG);
+// get an 8mb stack
+static STACK_SIZE_REQUEST: StackSizeRequest = StackSizeRequest::new(0).stack_size(EIGHT_MB_STACK);
 
-fn kernel_start(info: &'static mut BootInfo) -> ! {
+// get limine info for logging purposes
+static BOOT_INFO_REQUEST: BootInfoRequest = BootInfoRequest::new(0);
+
+fn initialize_klog() {
     kserial::serial_init(|| unsafe { SerialPort::default_com1() });
     klog::logger_init(LevelFilter::Trace);
 
     trace!("initialized serial");
+}
+
+fn initialize_kframebuffer() {
+    let mut response = FRAMEBUFFER_REQUEST.get_response();
+    let framebuffer = response
+        .get_mut()
+        .expect("should get a response from limine");
+
+    trace!(
+        "got framebuffers! count = {}",
+        framebuffer.framebuffer_count
+    );
+
+    assert!(
+        framebuffer.framebuffer_count >= 1,
+        "must have at least one framebuffer"
+    );
 
     kframebuffer::framebuffer_init(|| unsafe {
-        LinearFramebuffer::from(info.framebuffer.as_mut().unwrap_unchecked())
+        let buf = framebuffer.framebuffers()[0].as_ptr();
+
+        trace!("first framebuffer = {:?}", &*buf);
+
+        LinearFramebuffer::from(&mut *buf)
     });
 
     trace!("initialized framebuffer");
+}
+
+#[no_mangle]
+extern "C" fn _start() -> ! {
+    if LIMINE_BASE_REVISION[2] != 0 {
+        // if the bootloader didn't understand our revision, we're too far gone
+        unsafe {
+            asm!("cli");
+
+            loop {
+                asm!("hlt");
+            }
+        }
+    }
+
+    initialize_klog();
+    initialize_kframebuffer();
 
     let mut memory = 0usize;
     let mut usable = 0usize;
+
+    /*
 
     for region in info.memory_regions.iter() {
         let (start, end) = (region.start, region.end);
@@ -62,9 +105,9 @@ fn kernel_start(info: &'static mut BootInfo) -> ! {
             }
             kind => panic!("unknown type of memory page '{kind:?}'"),
         }
-    }
+    }*/
 
-    trace!("kernel address = {:?}", kernel_start as *mut u8);
+    trace!("kernel address = {:?}", _start as *mut u8);
     trace!("total memory = {memory} (in bytes)");
     trace!("total usable memory = {usable} (in bytes)");
     trace!("total unusable memory = {} (in bytes)", memory - usable);

@@ -19,7 +19,7 @@
 use crate::utility::{KSpinFairMutex, KSpinOnceCell};
 
 #[cfg(target_arch = "x86_64")]
-use bootloader_api::info::{FrameBuffer, PixelFormat};
+use limine::Framebuffer;
 
 /// Models a 4-byte color with red, green, blue, and an optional alpha channel.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -157,9 +157,9 @@ impl LinearFramebuffer {
 }
 
 #[cfg(target_arch = "x86_64")]
-impl From<&'static mut FrameBuffer> for LinearFramebuffer {
-    fn from(buf: &'static mut FrameBuffer) -> Self {
-        let info = buf.info();
+impl From<&'static mut Framebuffer> for LinearFramebuffer {
+    fn from(buf: &'static mut Framebuffer) -> Self {
+        /*let info = buf.info();
         let format = match info.pixel_format {
             PixelFormat::Rgb => ColorFormat::Rgb,
             PixelFormat::Bgr => ColorFormat::Bgr,
@@ -175,7 +175,8 @@ impl From<&'static mut FrameBuffer> for LinearFramebuffer {
             pitch: info.stride,
             bytes_per_pixel: info.bytes_per_pixel,
             format,
-        }
+        }*/
+        todo!()
     }
 }
 
