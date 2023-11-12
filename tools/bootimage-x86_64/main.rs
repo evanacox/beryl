@@ -95,18 +95,17 @@ fn main() {
     // ./limine/limine bios-install $(IMAGE_NAME).iso
     // rm -rf iso_root
     let iso_root = Path::new("./target/__iso_root/");
-    let output = Path::new("./target/images/beryl-x86_64-hybrid.iso");
 
     println!("building hybrid iso...");
     fs::create_dir_all(iso_root).unwrap();
     copy_files_into_root(iso_root, limine, &config);
     copy_bootloader_files(iso_root, limine);
 
-    build_hybrid_iso(iso_root, output);
+    build_hybrid_iso(iso_root, &config.iso);
 
     fs::remove_dir_all(iso_root).unwrap();
 
-    println!("hybrid iso copied to '{}'", output.display());
+    println!("hybrid iso copied to '{}'", config.iso.display());
 }
 
 fn copy_files_into_root(iso_root: &Path, limine: &Path, config: &Config) {
@@ -150,7 +149,7 @@ fn build_hybrid_iso(iso_root: &Path, output: &Path) {
     //         -efi-boot-part
     //         --efi-boot-image
     //         --protective-msdos-label iso_root
-    //         -o beryl-x86_64-hybrid.iso
+    //         -o <iso>
     Command::new("xorriso")
         .arg("-as")
         .arg("mkisofs")
