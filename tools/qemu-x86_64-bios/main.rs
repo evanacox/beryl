@@ -19,11 +19,10 @@ fn main() {
         .fallback("1G".to_string());
 
     let (file, mem) = construct!(file, mem).run();
-    let drive = format!("format=raw,file={file}");
 
     let mut status = Command::new("qemu-system-x86_64")
-        .arg("-drive")
-        .arg(&drive)
+        .arg("-cdrom")
+        .arg(&file)
         .arg("-serial")
         .arg("stdio")
         .arg("-m")
