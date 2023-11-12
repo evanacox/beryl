@@ -71,7 +71,7 @@ pub fn kernel_main(info: SystemInfo) -> ! {
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    error!("{info}");
+    error!("kernel panic! [rust-level]: {info}");
 
     unsafe {
         hal::privileged_halt_thread();

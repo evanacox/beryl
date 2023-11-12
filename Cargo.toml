@@ -15,7 +15,6 @@ members = [
 ]
 
 [dependencies]
-bootloader = "0.11.4"
 bpaf = "0.9.5"
 ovmf-prebuilt = "0.1.0-alpha.1"
 
