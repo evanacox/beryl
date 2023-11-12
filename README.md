@@ -17,6 +17,13 @@ into a flat binary (a `.img` file).
 
 ### Ex: Building for x86-64 in release mode
 
+Requirements for `bootimage-x86_64`:
+
+1. `xorriso`
+2. `git`
+
+Note that both must be in PATH.
+
 ```sh
 $ cargo build --package kernel --target x86_64-unknown-none --release
 $ cargo run --bin bootimage-x86_64 -- \

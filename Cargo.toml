@@ -31,8 +31,8 @@ name = "qemu-x86_64-uefi"
 path = "tools/qemu-x86_64-uefi/main.rs"
 
 [[bin]]
-name = "qemu-x86_64-uefi-debuggable"
-path = "tools/qemu-x86_64-uefi-debuggable/main.rs"
+name = "qemu-x86_64-debuggable"
+path = "tools/qemu-x86_64-debuggable/main.rs"
 
 [[bin]]
 name = "bootimage-x86_64"

@@ -20,15 +20,16 @@ fn main() {
         .fallback("1G".to_string());
 
     let (file, mem) = construct!(file, mem).run();
-    let drive = format!("format=raw,file={file}");
 
     let status = Command::new("qemu-system-x86_64")
         .arg("-s")
         .arg("-S")
-        .arg("-drive")
-        .arg(&drive)
-        .arg("-bios")
-        .arg(ovmf_prebuilt::ovmf_pure_efi())
+        .arg("-cdrom")
+        .arg(&file)
+        .arg("-M")
+        .arg("q35")
+        .arg("-boot")
+        .arg("d")
         .arg("-serial")
         .arg("stdio")
         .arg("-m")
