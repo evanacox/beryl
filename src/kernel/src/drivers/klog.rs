@@ -38,11 +38,11 @@ impl Log for KSerialLogger {
         {
             let mut serial = port.lock();
             let level = match record.level() {
-                Level::Error => "[ error ]",
-                Level::Warn => "[ warn  ]",
-                Level::Info => "[ info  ]",
-                Level::Debug => "[ debug ]",
-                Level::Trace => "[ trace ]",
+                Level::Error => "[error!]",
+                Level::Warn => "[ warn ]",
+                Level::Info => "[ info ]",
+                Level::Debug => "[debug!]",
+                Level::Trace => "[trace!]",
             };
 
             let _ = fmt::write(
