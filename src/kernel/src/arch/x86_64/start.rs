@@ -9,12 +9,12 @@
 //======---------------------------------------------------------------======//
 
 use crate::arch::x86_64::hal::SerialPort;
-use crate::arch::SystemInfo;
+use crate::arch::{hal, Architecture, SystemInfo};
 use crate::drivers::kframebuffer::LinearFramebuffer;
 use crate::drivers::{kframebuffer, klog, kserial};
 use core::arch::asm;
-use limine::{BootInfoRequest, Framebuffer, FramebufferRequest, StackSizeRequest};
-use log::{trace, LevelFilter};
+use limine::{BootInfoRequest, FramebufferRequest, MemmapRequest, StackSizeRequest};
+use log::{error, trace, LevelFilter};
 
 const EIGHT_MB_STACK: u64 = 8 * 1024 * 1024;
 
@@ -29,6 +29,10 @@ static STACK_SIZE_REQUEST: StackSizeRequest = StackSizeRequest::new(0).stack_siz
 
 // get limine info for logging purposes
 static BOOT_INFO_REQUEST: BootInfoRequest = BootInfoRequest::new(0);
+
+static MEM_MAP_REQUEST: MemmapRequest = MemmapRequest::new(0);
+
+static mut MANUFACTURER_ID: [u8; 12] = [0; 12];
 
 fn initialize_klog() {
     kserial::serial_init(|| unsafe { SerialPort::default_com1() });
@@ -56,12 +60,60 @@ fn initialize_kframebuffer() {
     kframebuffer::framebuffer_init(|| unsafe {
         let buf = framebuffer.framebuffers()[0].as_ptr();
 
-        trace!("first framebuffer = {:?}", &*buf);
-
         LinearFramebuffer::from(&mut *buf)
     });
 
     trace!("initialized framebuffer");
+}
+
+fn cpuid() -> bool {
+    // get manufacturer ID from `cpuid`
+    let mut ebx: u32;
+    let mut ecx: u32;
+    let mut edx: u32;
+
+    // see https://en.wikipedia.org/wiki/CPUID#Calling_CPUID
+    unsafe {
+        asm!(
+        "push rbx",
+        "cpuid",
+        "mov [rdi], ebx",
+        "mov [rdi + 4], edx",
+        "mov [rdi + 8], ecx",
+        "pop rbx",
+        in("rdi") MANUFACTURER_ID.as_mut_ptr(),
+        inout("eax") 0 => _,
+        out("ecx") _,
+        out("edx") _,
+        );
+    }
+
+    unsafe {
+        asm!("cpuid",
+        in("eax") 0x80000001u32,
+        out("edx") edx);
+    }
+
+    // if the 29th (starting from 0) bit is set, long mode is enabled
+    edx & (1 << 29) != 0
+}
+
+fn initialize_mem_map() {
+    let response = MEM_MAP_REQUEST
+        .get_response()
+        .get()
+        .expect("bootloader did not give a memory map, unable to proceed");
+
+    for i in 0..response.entry_count {
+        let entry = unsafe { &**response.entries.as_ptr().offset(i as isize) };
+
+        trace!(
+            "found region at i = {i}: (base: {:0x}, len: {:0x}, type: {:?})",
+            entry.base,
+            entry.len,
+            entry.typ
+        );
+    }
 }
 
 #[no_mangle]
@@ -78,39 +130,23 @@ extern "C" fn _start() -> ! {
     }
 
     initialize_klog();
+
+    if !cpuid() {
+        error!(
+            "Beryl only supports x86-64 processors, not x86 processors. \
+               The current CPU reported that it doesn't support long mode via `cpuid`"
+        );
+
+        unsafe { hal::privileged_halt_thread() }
+    }
+
     initialize_kframebuffer();
+    initialize_mem_map();
 
-    let mut memory = 0usize;
-    let mut usable = 0usize;
-
-    /*
-
-    for region in info.memory_regions.iter() {
-        let (start, end) = (region.start, region.end);
-
-        memory += (end - start) as usize;
-
-        match region.kind {
-            MemoryRegionKind::Usable => {
-                trace!("found usable page! [{start:0x}, {end:0x}]");
-
-                usable += (end - start) as usize;
-            }
-            MemoryRegionKind::Bootloader => trace!("found bootloader page! [{start:0x}, {end:0x}]"),
-            MemoryRegionKind::UnknownUefi(_) => {
-                trace!("found unknown uefi page! [{start:0x}, {end:0x}]")
-            }
-            MemoryRegionKind::UnknownBios(_) => {
-                trace!("found unknown bios page! [{start:0x}, {end:0x}]")
-            }
-            kind => panic!("unknown type of memory page '{kind:?}'"),
-        }
-    }*/
-
-    trace!("kernel address = {:?}", _start as *mut u8);
-    trace!("total memory = {memory} (in bytes)");
-    trace!("total usable memory = {usable} (in bytes)");
-    trace!("total unusable memory = {} (in bytes)", memory - usable);
-
-    crate::kernel_main(SystemInfo { memory })
+    crate::kernel_main(SystemInfo {
+        cpu: (Architecture::X86_64, unsafe {
+            core::str::from_utf8_unchecked(&MANUFACTURER_ID)
+        }),
+        memory: 0,
+    })
 }

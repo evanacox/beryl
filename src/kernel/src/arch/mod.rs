@@ -16,8 +16,19 @@
 //!
 //! This module also provides `hal`
 
+/// The architecture that the kernel is running on
+#[derive(Copy, Clone, Debug)]
+pub enum Architecture {
+    Aarch64,
+    X86_64,
+}
+
+/// Generic system information that the kernel gets
+/// from the arch-specific boot code.
 #[derive(Copy, Clone, Debug)]
 pub struct SystemInfo {
+    /// The CPU architecture that the kernel is running on
+    pub cpu: (Architecture, &'static str),
     /// The amount of memory (in bytes) that the host system has
     /// available to it **in total**. This includes memory that
     /// the kernel is currently occupying.

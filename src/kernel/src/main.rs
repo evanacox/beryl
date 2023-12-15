@@ -23,16 +23,14 @@
 
 mod arch;
 mod drivers;
+mod interrupts;
+mod memory;
 mod utility;
 
 use crate::arch::{hal, SystemInfo};
-use crate::drivers::kframebuffer;
-use core::mem::MaybeUninit;
 use core::panic::PanicInfo;
-use core::ptr;
 use ksupport::sync::BasicMutex;
-use ksupport::Xoshiro256;
-use log::{error, trace};
+use log::*;
 
 /// The true platform-independent entry point for the kernel.
 ///
@@ -43,30 +41,10 @@ use log::{error, trace};
 /// At this point, the stack is expected to be set up, drivers initialized, anything else
 /// that is "reasonable" to use is ready (except floating-point).
 pub fn kernel_main(info: SystemInfo) -> ! {
-    trace!("entered `::kernel_main`! system memory: {}", info.memory);
+    info!("entered `::kernel_main`! system info: {info:?}");
+    trace!("kernel_main located at {:?}", kernel_main as *mut u8);
 
-    let mut buf = kframebuffer::framebuffer();
-    let mut value = 0x01u8;
-    let mut local = [0u8; 4096000];
-
-    trace!("zeroed double-buffer");
-
-    loop {
-        for byte in local.iter_mut() {
-            *byte = value;
-
-            value ^= value.wrapping_mul(71);
-        }
-
-        {
-            let mut raw = buf.lock();
-            let size = raw.full_raw_buffer().len();
-
-            unsafe {
-                ptr::copy_nonoverlapping(local.as_ptr(), raw.raw_buffer(), size);
-            }
-        }
-    }
+    unsafe { hal::privileged_halt_thread() }
 }
 
 #[panic_handler]

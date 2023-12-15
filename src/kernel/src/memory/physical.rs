@@ -8,12 +8,10 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-//! x86_64-specific kernel code.
-//!
-//! This uses the [`bootloader`](bootloader) crate for initial boot.
+use core::sync::atomic::AtomicUsize;
 
-mod gdt;
-mod idt;
-mod start;
+static PHYS_MEM_OFFSET_BEGIN: AtomicUsize = AtomicUsize::new(0);
 
-pub mod hal;
+pub struct PhysicalPageManager {
+    //
+}

@@ -8,12 +8,6 @@
 //                                                                           //
 //======---------------------------------------------------------------======//
 
-//! x86_64-specific kernel code.
-//!
-//! This uses the [`bootloader`](bootloader) crate for initial boot.
+mod physical;
 
-mod gdt;
-mod idt;
-mod start;
-
-pub mod hal;
+pub use physical::*;
