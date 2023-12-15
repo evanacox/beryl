@@ -20,7 +20,7 @@ fn main() {
 
     let (file, mem) = construct!(file, mem).run();
 
-    let mut status = Command::new("qemu-system-x86_64")
+    let status = Command::new("qemu-system-x86_64")
         .arg("-cdrom")
         .arg(&file)
         .arg("-serial")
